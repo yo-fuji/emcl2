@@ -1,0 +1,12 @@
+BasedOnStyle: 'LLVM'
+AccessModifierOffset: -2
+AlignEscapedNewlines: 'Left'
+BreakBeforeBraces: 'Linux'
+BreakConstructorInitializers: 'BeforeComma'
+ColumnLimit: 0
+DerivePointerAlignment: false
+IndentWidth: 2
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+PointerAlignment: 'Left'
+UseTab: 'Never'
