@@ -34,6 +34,9 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("base_frame_id")) {
     this->declare_parameter("base_frame_id", std::string("base_link"));
   }
+  if (!this->has_parameter("use_map_topic")) {
+    this->declare_parameter("use_map_topic", true);
+  }
 
   if (!this->has_parameter("laser_min_range")) {
     this->declare_parameter("laser_min_range", 0.0);
@@ -117,6 +120,7 @@ EMcl2Node::on_configure(const rclcpp_lifecycle::State& state)
 
   init_request_ = false;
   simple_reset_request_ = false;
+  map_request_ = false;
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -165,6 +169,8 @@ EMcl2Node::on_cleanup(const rclcpp_lifecycle::State& state)
   tf_.reset();
   tfb_.reset();
 
+  static_map_srv_.reset();
+
   global_loc_srv_.reset();
 
   map_sub_.reset();
@@ -201,9 +207,15 @@ void EMcl2Node::initCommunication()
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", rclcpp::SystemDefaultsQoS(),
     std::bind(&EMcl2Node::initialPoseReceived, this, _1));
-  map_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-    "map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
-    std::bind(&EMcl2Node::mapReceived, this, _1));
+
+  bool use_map_topic = this->get_parameter("use_map_topic").as_bool();
+  if (use_map_topic) {
+    map_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
+      "map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
+      std::bind(&EMcl2Node::mapReceived, this, _1));
+  } else {
+    static_map_srv_ = this->create_client<nav_msgs::srv::GetMap>("static_map");
+  }
 
   global_loc_srv_ = this->create_service<std_srvs::srv::Empty>(
     "global_localization", std::bind(&EMcl2Node::cbSimpleReset, this, _1, _2, _3));
@@ -247,12 +259,12 @@ void EMcl2Node::initialPoseReceived(const geometry_msgs::msg::PoseWithCovariance
   init_t_ = tf2::getYaw(msg->pose.pose.orientation);
 }
 
-void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr& msg)
+void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid& msg)
 {
   double likelihood_range;
   likelihood_range = this->get_parameter("laser_likelihood_max_dist").as_double();
 
-  auto map = std::make_shared<LikelihoodFieldMap>(*msg.get(), likelihood_range);
+  auto map = std::make_shared<LikelihoodFieldMap>(msg, likelihood_range);
   auto om = std::move(initOdometry());
 
   Scan scan;
@@ -286,6 +298,16 @@ void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr& 
 
 void EMcl2Node::loop()
 {
+  if (static_map_srv_ && (!map_request_)) {
+    static_map_srv_->wait_for_service();
+
+    auto request = std::make_shared<nav_msgs::srv::GetMap::Request>();
+    auto service_callback = [this](rclcpp::Client<nav_msgs::srv::GetMap>::SharedFuture future) {
+      mapReceived(future.get()->map);
+    };
+    static_map_srv_->async_send_request(request, service_callback);
+    map_request_ = true;
+  }
   if (!pf_) {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "map not received.");
     return;

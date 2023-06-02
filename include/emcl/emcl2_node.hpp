@@ -55,6 +55,8 @@ private:
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr global_loc_srv_;
 
+  rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr static_map_srv_;
+
   rclcpp::TimerBase::SharedPtr loop_timer_;
 
   std::string footprint_frame_id_;
@@ -72,6 +74,7 @@ private:
   bool init_request_;
   bool simple_reset_request_;
   double init_x_, init_y_, init_t_;
+  bool map_request_;
 
   void publishPose(const rclcpp::Time& stamp,
                    double x, double y, double t,
@@ -91,7 +94,7 @@ private:
                      const std::shared_ptr<std_srvs::srv::Empty::Request> /*req*/,
                      std::shared_ptr<std_srvs::srv::Empty::Response> /*res*/);
   void initialPoseReceived(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr& msg);
-  void mapReceived(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr& msg);
+  void mapReceived(const nav_msgs::msg::OccupancyGrid& msg);
 };
 
 } // namespace emcl2
