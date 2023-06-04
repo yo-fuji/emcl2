@@ -8,15 +8,14 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_library(emcl2 SHARED
-  src/emcl2_node.cpp
-  src/ExpResetMcl2.cpp
-  src/Mcl.cpp
-  src/Particle.cpp
-  src/OdomModel.cpp
-  src/Pose.cpp
-  src/Scan.cpp
-  src/LikelihoodFieldMap.cpp)
+ament_auto_add_library(Pose_emcl2 SHARED src/Pose.cpp)
+ament_auto_add_library(Scan_emcl2 SHARED src/Scan.cpp)
+ament_auto_add_library(LikelihoodFieldMap_emcl2 SHARED src/LikelihoodFieldMap.cpp)
+ament_auto_add_library(OdomModel_emcl2 SHARED src/OdomModel.cpp)
+ament_auto_add_library(Particle_emcl2 SHARED src/Particle.cpp)
+ament_auto_add_library(Mcl_emcl2 SHARED src/Mcl.cpp)
+ament_auto_add_library(ExpResetMcl2_emcl2 SHARED src/ExpResetMcl2.cpp)
+ament_auto_add_library(emcl2 SHARED src/emcl2_node.cpp)
 
 rclcpp_components_register_node(emcl2
   PLUGIN "emcl2::EMcl2Node"
