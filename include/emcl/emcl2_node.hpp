@@ -69,6 +69,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tfl_;
   std::shared_ptr<tf2_ros::Buffer> tf_;
 
+  rclcpp::Time scan_stamp_;
   tf2::Transform latest_tf_;
 
   bool init_request_;

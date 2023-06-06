@@ -118,6 +118,7 @@ EMcl2Node::on_configure(const rclcpp_lifecycle::State& state)
     std::chrono::microseconds(static_cast<int64_t>(1e6 / odom_freq)),
     std::bind(&EMcl2Node::loop, this));
 
+  scan_stamp_ = this->now();
   init_request_ = false;
   simple_reset_request_ = false;
   map_request_ = false;
@@ -244,6 +245,7 @@ std::shared_ptr<OdomModel> EMcl2Node::initOdometry()
 void EMcl2Node::cbScan(const sensor_msgs::msg::LaserScan::ConstSharedPtr& msg)
 {
   scan_frame_id_ = msg->header.frame_id;
+  scan_stamp_ = msg->header.stamp;
 
   if (!pf_) {
     return;
@@ -416,7 +418,7 @@ void EMcl2Node::publishOdomFrame(const rclcpp::Time& stamp,
   }
   tf2::convert(odom_to_map.pose, latest_tf_);
 
-  rclcpp::Time transform_expiration = this->now() + rclcpp::Duration::from_seconds(0.2);
+  rclcpp::Time transform_expiration = scan_stamp_ + rclcpp::Duration::from_seconds(0.2);
   geometry_msgs::msg::TransformStamped tmp_tf_stamped;
   tmp_tf_stamped.header.frame_id = global_frame_id_;
   tmp_tf_stamped.header.stamp = transform_expiration;
