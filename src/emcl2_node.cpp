@@ -335,7 +335,7 @@ std::shared_ptr<OdomModel> EMcl2Node::initOdometry()
   rf = this->get_parameter("odom_rot_dev_per_fw").as_double();
   rr = this->get_parameter("odom_rot_dev_per_rot").as_double();
 
-  return std::shared_ptr<OdomModel>(new OdomModel(ff, fr, rf, rr));
+  return std::make_shared<OdomModel>(ff, fr, rf, rr);
 }
 
 void EMcl2Node::cbScan(const sensor_msgs::msg::LaserScan::ConstSharedPtr& msg)
