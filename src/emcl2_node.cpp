@@ -61,6 +61,13 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
     descriptor.read_only = true;
     this->declare_parameter("use_map_topic", true, descriptor);
   }
+  if (!this->has_parameter("transform_tolerance")) {
+    rcl_interfaces::msg::ParameterDescriptor descriptor;
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+    descriptor.description = "time with which to post-date the transform that is published, to indicate that this transform is valid into the future";
+    descriptor.read_only = true;
+    this->declare_parameter("transform_tolerance", 0.2, descriptor);
+  }
 
   if (!this->has_parameter("laser_min_range")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
@@ -322,6 +329,7 @@ void EMcl2Node::initCommunication()
   footprint_frame_id_ = this->get_parameter("footprint_frame_id").as_string();
   odom_frame_id_ = this->get_parameter("odom_frame_id").as_string();
   base_frame_id_ = this->get_parameter("base_frame_id").as_string();
+  transform_tolerance_ = this->get_parameter("transform_tolerance").as_double();
 
   tfb_.reset(new tf2_ros::TransformBroadcaster(this));
   tf_.reset(new tf2_ros::Buffer(this->get_clock()));
@@ -381,7 +389,7 @@ void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid& msg)
     try {
       geometry_msgs::msg::TransformStamped transform_stamped;
       transform_stamped = tf_->lookupTransform(global_frame_id_, footprint_frame_id_,
-                                               this->now(), rclcpp::Duration::from_seconds(0.2));
+                                               this->now(), rclcpp::Duration::from_seconds(transform_tolerance_));
       init_pose.x_ = transform_stamped.transform.translation.x;
       init_pose.y_ = transform_stamped.transform.translation.y;
       init_pose.t_ = tf2::getYaw(transform_stamped.transform.rotation);
@@ -529,7 +537,7 @@ void EMcl2Node::publishOdomFrame(const rclcpp::Time& stamp,
   }
   tf2::convert(odom_to_map.pose, latest_tf_);
 
-  rclcpp::Time transform_expiration = scan_stamp_ + rclcpp::Duration::from_seconds(0.2);
+  rclcpp::Time transform_expiration = scan_stamp_ + rclcpp::Duration::from_seconds(transform_tolerance_);
   geometry_msgs::msg::TransformStamped tmp_tf_stamped;
   tmp_tf_stamped.header.frame_id = global_frame_id_;
   tmp_tf_stamped.header.stamp = transform_expiration;

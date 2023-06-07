@@ -64,6 +64,7 @@ private:
   std::string odom_frame_id_;
   std::string scan_frame_id_;
   std::string base_frame_id_;
+  double transform_tolerance_;
 
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfb_;
   std::shared_ptr<tf2_ros::TransformListener> tfl_;
