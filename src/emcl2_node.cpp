@@ -218,6 +218,7 @@ EMcl2Node::on_configure(const rclcpp_lifecycle::State& state)
   init_request_ = false;
   simple_reset_request_ = false;
   map_request_ = false;
+  first_init_ = true;
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -374,6 +375,20 @@ void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid& msg)
   init_pose.x_ = this->get_parameter("initial_pose_x").as_double();
   init_pose.y_ = this->get_parameter("initial_pose_y").as_double();
   init_pose.t_ = this->get_parameter("initial_pose_a").as_double();
+  if (first_init_) {
+    first_init_ = false;
+  } else {
+    try {
+      geometry_msgs::msg::TransformStamped transform_stamped;
+      transform_stamped = tf_->lookupTransform(global_frame_id_, footprint_frame_id_,
+                                               this->now(), rclcpp::Duration::from_seconds(0.2));
+      init_pose.x_ = transform_stamped.transform.translation.x;
+      init_pose.y_ = transform_stamped.transform.translation.y;
+      init_pose.t_ = tf2::getYaw(transform_stamped.transform.rotation);
+    } catch (const tf2::TransformException& e) {
+      RCLCPP_WARN(this->get_logger(), "Failed to get current pose as initial pose (%s)", e.what());
+    }
+  }
 
   int num_particles;
   double alpha_th;

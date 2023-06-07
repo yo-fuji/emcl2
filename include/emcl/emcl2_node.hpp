@@ -75,6 +75,7 @@ private:
   bool init_request_;
   bool simple_reset_request_;
   double init_x_, init_y_, init_t_;
+  bool first_init_;
   bool map_request_;
 
   void publishPose(const rclcpp::Time& stamp,
