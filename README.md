@@ -23,6 +23,11 @@ nav2_amclを置換するため、インターフェース周りで仕様を変�
 
     trueの場合、mapトピックが有効になり、static_mapサービス呼び出しは行われません。
 
+- transform_tolerance (double, default: 0.2)
+
+    送信されるtransformのタイムスタンプに加算される時間 [sec]<br>
+    入力トピックの時間誤差の許容値になります。
+
 ## 参照
 
 [ROS版README](docs/ROS_README.md)<br>
