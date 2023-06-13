@@ -21,7 +21,7 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("odom_freq")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
-    descriptor.description = "frequency of odometry update";
+    descriptor.description = "frequency of odometry update [Hz]";
     descriptor.read_only = true;
     this->declare_parameter("odom_freq", 20, descriptor);
   }
@@ -64,7 +64,7 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("transform_tolerance")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "time with which to post-date the transform that is published, to indicate that this transform is valid into the future";
+    descriptor.description = "time with which to post-date the transform that is published, to indicate that this transform is valid into the future [sec]";
     descriptor.read_only = true;
     this->declare_parameter("transform_tolerance", 0.2, descriptor);
   }
@@ -72,14 +72,14 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("laser_min_range")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "threshold for discarding scans whose ranges are smaller than this value";
+    descriptor.description = "threshold for discarding scans whose ranges are smaller than this value [m]";
     descriptor.read_only = true;
     this->declare_parameter("laser_min_range", 0.0, descriptor);
   }
   if (!this->has_parameter("laser_max_range")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "threshold for discarding scans whose ranges are larger than this value";
+    descriptor.description = "threshold for discarding scans whose ranges are larger than this value [m]";
     descriptor.read_only = true;
     this->declare_parameter("laser_max_range", 100000000.0, descriptor);
   }
@@ -94,21 +94,21 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("initial_pose_x")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "initial x coordinate of particles";
+    descriptor.description = "initial x coordinate of particles [m]";
     descriptor.read_only = true;
     this->declare_parameter("initial_pose_x", 0.0, descriptor);
   }
   if (!this->has_parameter("initial_pose_y")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "initial y coordinate of particles";
+    descriptor.description = "initial y coordinate of particles [m]";
     descriptor.read_only = true;
     this->declare_parameter("initial_pose_y", 0.0, descriptor);
   }
   if (!this->has_parameter("initial_pose_a")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "initial yaw coordinate of particles";
+    descriptor.description = "initial yaw coordinate of particles [rad]";
     descriptor.read_only = true;
     this->declare_parameter("initial_pose_a", 0.0, descriptor);
   }
@@ -129,13 +129,13 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("expansion_radius_position")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "maximum change of the position on the xy-plane when the reset replaces a particle";
+    descriptor.description = "maximum change of the position on the xy-plane when the reset replaces a particle [m]";
     this->declare_parameter("expansion_radius_position", 0.1, descriptor);
   }
   if (!this->has_parameter("expansion_radius_orientation")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "maximum change of the yaw angle when the reset replaces a particle";
+    descriptor.description = "maximum change of the yaw angle when the reset replaces a particle [rad]";
     this->declare_parameter("expansion_radius_orientation", 0.2, descriptor);
   }
 
@@ -148,7 +148,7 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("range_threshold")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "threshold of the range of lasers; if all lasers on this range penetrate occupancy cells, the pose of the particle is judged as wrong";
+    descriptor.description = "threshold of the range of lasers; if all lasers on this range penetrate occupancy cells, the pose of the particle is judged as wrong [rad]";
     this->declare_parameter("range_threshold", 0.1, descriptor);
   }
   if (!this->has_parameter("sensor_reset")) {
@@ -161,28 +161,28 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("odom_fw_dev_per_fw")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "standard deviation of forward motion noise by forward motion";
+    descriptor.description = "standard deviation of forward motion noise by forward motion [m/m]";
     descriptor.read_only = true;
     this->declare_parameter("odom_fw_dev_per_fw", 0.19, descriptor);
   }
   if (!this->has_parameter("odom_fw_dev_per_rot")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "standard deviation of forward motion noise by rotational motion";
+    descriptor.description = "standard deviation of forward motion noise by rotational motion [m/rad]";
     descriptor.read_only = true;
     this->declare_parameter("odom_fw_dev_per_rot", 0.0001, descriptor);
   }
   if (!this->has_parameter("odom_rot_dev_per_fw")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "standard deviation of rotational motion noise by forward motion";
+    descriptor.description = "standard deviation of rotational motion noise by forward motion [rad/m]";
     descriptor.read_only = true;
     this->declare_parameter("odom_rot_dev_per_fw", 0.13, descriptor);
   }
   if (!this->has_parameter("odom_rot_dev_per_rot")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "standard deviation of rotational motion noise by rotational motion";
+    descriptor.description = "standard deviation of rotational motion noise by rotational motion [rad/rad]";
     descriptor.read_only = true;
     this->declare_parameter("odom_rot_dev_per_rot", 0.2, descriptor);
   }
@@ -190,7 +190,7 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   if (!this->has_parameter("laser_likelihood_max_dist")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
-    descriptor.description = "maximum distance to inflate occupied cells on the likelihood field map";
+    descriptor.description = "maximum distance to inflate occupied cells on the likelihood field map [m]";
     descriptor.read_only = true;
     this->declare_parameter("laser_likelihood_max_dist", 0.2, descriptor);
   }
