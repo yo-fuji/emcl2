@@ -31,6 +31,18 @@ ExpResetMcl2::~ExpResetMcl2()
 {
 }
 
+void ExpResetMcl2::paramsUpdate(double alpha_th,
+                                double expansion_radius_position, double expansion_radius_orientation,
+                                double extraction_rate, double range_threshold, bool sensor_reset)
+{
+  alpha_threshold_ = alpha_th;
+  expansion_radius_position_ = expansion_radius_position;
+  expansion_radius_orientation_ = expansion_radius_orientation;
+  extraction_rate_ = extraction_rate;
+  range_threshold_ = range_threshold;
+  sensor_reset_ = sensor_reset;
+}
+
 void ExpResetMcl2::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv)
 {
   if (processed_seq_ == scan_.seq_)

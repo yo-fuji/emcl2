@@ -41,6 +41,8 @@ protected:
   nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State& state) override;
   nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State& state) override;
   nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State& state) override;
+  rcl_interfaces::msg::SetParametersResult
+  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
 private:
   std::shared_ptr<ExpResetMcl2> pf_;
@@ -59,12 +61,21 @@ private:
 
   rclcpp::TimerBase::SharedPtr loop_timer_;
 
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
+
   std::string footprint_frame_id_;
   std::string global_frame_id_;
   std::string odom_frame_id_;
   std::string scan_frame_id_;
   std::string base_frame_id_;
   double transform_tolerance_;
+
+  double alpha_threshold_;
+  double expansion_radius_position_;
+  double expansion_radius_orientation_;
+  double extraction_rate_;
+  double range_threshold_;
+  bool sensor_reset_;
 
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfb_;
   std::shared_ptr<tf2_ros::TransformListener> tfl_;
@@ -98,6 +109,11 @@ private:
                      std::shared_ptr<std_srvs::srv::Empty::Response> /*res*/);
   void initialPoseReceived(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr& msg);
   void mapReceived(const nav_msgs::msg::OccupancyGrid& msg);
+
+  static inline std::string boolString(bool value)
+  {
+    return (value) ? "true" : "false";
+  }
 };
 
 } // namespace emcl2

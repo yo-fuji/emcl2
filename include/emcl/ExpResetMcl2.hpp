@@ -22,6 +22,10 @@ public:
                double extraction_rate, double range_threshold, bool sensor_reset);
   ~ExpResetMcl2();
 
+  void paramsUpdate(double alpha_th,
+                    double expansion_radius_position, double expansion_radius_orientation,
+                    double extraction_rate, double range_threshold, bool sensor_reset);
+
   void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
 
 protected:

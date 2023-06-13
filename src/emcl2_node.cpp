@@ -124,21 +124,18 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "threshold of the alpha value for expansion resetting";
-    descriptor.read_only = true;
     this->declare_parameter("alpha_threshold", 0.0, descriptor);
   }
   if (!this->has_parameter("expansion_radius_position")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "maximum change of the position on the xy-plane when the reset replaces a particle";
-    descriptor.read_only = true;
     this->declare_parameter("expansion_radius_position", 0.1, descriptor);
   }
   if (!this->has_parameter("expansion_radius_orientation")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "maximum change of the yaw angle when the reset replaces a particle";
-    descriptor.read_only = true;
     this->declare_parameter("expansion_radius_orientation", 0.2, descriptor);
   }
 
@@ -146,21 +143,18 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "rate of particles that are checked by the node";
-    descriptor.read_only = true;
     this->declare_parameter("extraction_rate", 0.1, descriptor);
   }
   if (!this->has_parameter("range_threshold")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "threshold of the range of lasers; if all lasers on this range penetrate occupancy cells, the pose of the particle is judged as wrong";
-    descriptor.read_only = true;
     this->declare_parameter("range_threshold", 0.1, descriptor);
   }
   if (!this->has_parameter("sensor_reset")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
     descriptor.description = "flag for sensor resettings";
-    descriptor.read_only = true;
     this->declare_parameter("sensor_reset", false, descriptor);
   }
 
@@ -240,6 +234,17 @@ EMcl2Node::on_activate(const rclcpp_lifecycle::State& state)
   pose_pub_->on_activate();
   alpha_pub_->on_activate();
 
+  alpha_threshold_ = this->get_parameter("alpha_threshold").as_double();
+  expansion_radius_position_ = this->get_parameter("expansion_radius_position").as_double();
+  expansion_radius_orientation_ = this->get_parameter("expansion_radius_orientation").as_double();
+  extraction_rate_ = this->get_parameter("extraction_rate").as_double();
+  range_threshold_ = this->get_parameter("range_threshold").as_double();
+  sensor_reset_ = this->get_parameter("sensor_reset").as_bool();
+
+  auto node = shared_from_this();
+  dyn_params_handler_ = node->add_on_set_parameters_callback(
+    std::bind(&EMcl2Node::dynamicParametersCallback, this, _1));
+
   // create bond connection
   createBond();
 
@@ -251,6 +256,8 @@ EMcl2Node::on_deactivate(const rclcpp_lifecycle::State& state)
 {
   (void)state;
   RCLCPP_INFO(this->get_logger(), "Deactivating");
+
+  dyn_params_handler_.reset();
 
   particlecloud_pub_->on_deactivate();
   pose_pub_->on_deactivate();
@@ -295,6 +302,66 @@ EMcl2Node::on_shutdown(const rclcpp_lifecycle::State& state)
   (void)state;
   RCLCPP_INFO(this->get_logger(), "Shutting down");
   return nav2_util::CallbackReturn::SUCCESS;
+}
+
+rcl_interfaces::msg::SetParametersResult
+EMcl2Node::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  bool update_pf = false;
+
+  for (auto parameter : parameters) {
+    const auto& type = parameter.get_type();
+    const auto& name = parameter.get_name();
+
+    if (type == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
+      double value = parameter.as_double();
+      if (name == "alpha_threshold") {
+        alpha_threshold_ = value;
+        update_pf = true;
+      } else if (name == "expansion_radius_position") {
+        expansion_radius_position_ = value;
+        update_pf = true;
+      } else if (name == "expansion_radius_orientation") {
+        expansion_radius_orientation_ = value;
+        update_pf = true;
+      } else if (name == "extraction_rate") {
+        extraction_rate_ = value;
+        update_pf = true;
+      } else if (name == "range_threshold") {
+        range_threshold_ = value;
+        update_pf = true;
+      } else {
+        RCLCPP_DEBUG(this->get_logger(), "Unknown name: %s: %f", name.c_str(), value);
+      }
+    } else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_BOOL) {
+      bool value = parameter.as_bool();
+      if (name == "sensor_reset") {
+        sensor_reset_ = value;
+        update_pf = true;
+      } else {
+        RCLCPP_DEBUG(this->get_logger(), "Unknown name: %s: %s", name.c_str(), boolString(value).c_str());
+      }
+    } else {
+      RCLCPP_DEBUG(this->get_logger(), "Not supported type");
+    }
+  }
+
+  if (update_pf) {
+    RCLCPP_INFO(this->get_logger(), "alpha_threshold: %f", alpha_threshold_);
+    RCLCPP_INFO(this->get_logger(), "expansion_radius_position: %f", expansion_radius_position_);
+    RCLCPP_INFO(this->get_logger(), "expansion_radius_orientation: %f", expansion_radius_orientation_);
+    RCLCPP_INFO(this->get_logger(), "extraction_rate: %f", extraction_rate_);
+    RCLCPP_INFO(this->get_logger(), "range_threshold: %f", range_threshold_);
+    RCLCPP_INFO(this->get_logger(), "sensor_reset: %s", boolString(sensor_reset_).c_str());
+
+    pf_->paramsUpdate(alpha_threshold_,
+                      expansion_radius_position_, expansion_radius_orientation_,
+                      extraction_rate_, range_threshold_, sensor_reset_);
+  }
+
+  result.successful = true;
+  return result;
 }
 
 void EMcl2Node::initCommunication()
@@ -399,22 +466,11 @@ void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid& msg)
   }
 
   int num_particles;
-  double alpha_th;
-  double ex_rad_pos, ex_rad_ori;
   num_particles = this->get_parameter("num_particles").as_int();
-  alpha_th = this->get_parameter("alpha_threshold").as_double();
-  ex_rad_pos = this->get_parameter("expansion_radius_position").as_double();
-  ex_rad_ori = this->get_parameter("expansion_radius_orientation").as_double();
-
-  double extraction_rate, range_threshold;
-  bool sensor_reset;
-  extraction_rate = this->get_parameter("extraction_rate").as_double();
-  range_threshold = this->get_parameter("range_threshold").as_double();
-  sensor_reset = this->get_parameter("sensor_reset").as_bool();
 
   pf_.reset(new ExpResetMcl2(init_pose, num_particles, scan, om, map,
-                             alpha_th, ex_rad_pos, ex_rad_ori,
-                             extraction_rate, range_threshold, sensor_reset));
+                             alpha_threshold_, expansion_radius_position_, expansion_radius_orientation_,
+                             extraction_rate_, range_threshold_, sensor_reset_));
 }
 
 void EMcl2Node::loop()
