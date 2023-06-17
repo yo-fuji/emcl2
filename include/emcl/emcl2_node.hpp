@@ -82,7 +82,6 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_;
 
   rclcpp::Time scan_stamp_;
-  tf2::Transform latest_tf_;
 
   bool init_request_;
   bool simple_reset_request_;

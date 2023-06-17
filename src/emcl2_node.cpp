@@ -574,33 +574,26 @@ void EMcl2Node::publishPose(const rclcpp::Time& stamp,
 void EMcl2Node::publishOdomFrame(const rclcpp::Time& stamp,
                                  double x, double y, double t)
 {
-  geometry_msgs::msg::PoseStamped odom_to_map;
   try {
     tf2::Quaternion q;
     q.setRPY(0, 0, t);
-    tf2::Transform tmp_tf(q, tf2::Vector3(x, y, 0.0));
+    tf2::Transform map_to_base(q, tf2::Vector3(x, y, 0));
 
-    geometry_msgs::msg::PoseStamped tmp_tf_stamped;
-    tmp_tf_stamped.header.frame_id = footprint_frame_id_;
-    tmp_tf_stamped.header.stamp = stamp;
-    tf2::toMsg(tmp_tf.inverse(), tmp_tf_stamped.pose);
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped = tf_->lookupTransform(odom_frame_id_, footprint_frame_id_,
+                                             stamp, rclcpp::Duration::from_seconds(transform_tolerance_));
+    tf2::Transform odom_to_base;
+    tf2::fromMsg(transform_stamped.transform, odom_to_base);
 
-    tf_->transform(tmp_tf_stamped, odom_to_map, odom_frame_id_);
-
+    geometry_msgs::msg::TransformStamped map_to_odom_stamped;
+    tf2::toMsg(map_to_base * odom_to_base.inverse(), map_to_odom_stamped.transform);
+    map_to_odom_stamped.header.stamp = scan_stamp_ + rclcpp::Duration::from_seconds(transform_tolerance_);
+    map_to_odom_stamped.header.frame_id = global_frame_id_;
+    map_to_odom_stamped.child_frame_id = odom_frame_id_;
+    tfb_->sendTransform(map_to_odom_stamped);
   } catch (const tf2::TransformException& e) {
     RCLCPP_DEBUG(this->get_logger(), "Failed to subtract base to odom transform (%s)", e.what());
-    return;
   }
-  tf2::convert(odom_to_map.pose, latest_tf_);
-
-  rclcpp::Time transform_expiration = scan_stamp_ + rclcpp::Duration::from_seconds(transform_tolerance_);
-  geometry_msgs::msg::TransformStamped tmp_tf_stamped;
-  tmp_tf_stamped.header.frame_id = global_frame_id_;
-  tmp_tf_stamped.header.stamp = transform_expiration;
-  tmp_tf_stamped.child_frame_id = odom_frame_id_;
-  tf2::convert(latest_tf_.inverse(), tmp_tf_stamped.transform);
-
-  tfb_->sendTransform(tmp_tf_stamped);
 }
 
 void EMcl2Node::publishParticles(const rclcpp::Time& stamp)
