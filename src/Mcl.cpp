@@ -107,8 +107,12 @@ void Mcl::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv)
 
   double valid_pct = 0.0;
   int valid_beams = scan.countValidBeams(&valid_pct);
-  if (valid_beams == 0)
+  if (valid_beams == 0) {
+    for (auto& p : particles_) {
+      p.stamp_ = scan.stamp_;
+    }
     return;
+  }
 
   for (auto& p : particles_) {
     p.w_ *= p.likelihood(map_.get(), scan);
