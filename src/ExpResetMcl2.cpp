@@ -79,16 +79,20 @@ void ExpResetMcl2::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, 
   if (valid_beams == 0)
     return;
 
-  for (auto& p : particles_)
+  for (auto& p : particles_) {
     p.w_ *= p.likelihood(map_.get(), scan);
+    p.stamp_ = scan.stamp_;
+  }
 
   alpha_ = nonPenetrationRate(static_cast<int>(particles_.size() * extraction_rate_), map_.get(), scan);
   RCLCPP_DEBUG(logger_, "ALPHA: %f / %f", alpha_, alpha_threshold_);
   if (alpha_ < alpha_threshold_) {
     RCLCPP_INFO(logger_, "RESET: %f / %f", alpha_, alpha_threshold_);
     expansionReset();
-    for (auto& p : particles_)
+    for (auto& p : particles_) {
       p.w_ *= p.likelihood(map_.get(), scan);
+      p.stamp_ = scan.stamp_;
+    }
   }
 
   if (normalizeBelief() > 0.000001)
