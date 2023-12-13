@@ -17,7 +17,7 @@ nav2_amclを置換するため、インターフェース周りで仕様を変�
 
     use_map_topicパラメータがtrueに設定された場合、このトピックを受信して尤度場地図を生成します。
 
-### Parameter
+### Parameters
 
 - use_map_topic (bool, default: true)
 
