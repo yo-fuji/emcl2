@@ -234,13 +234,6 @@ EMcl2Node::on_activate(const rclcpp_lifecycle::State& state)
   pose_pub_->on_activate();
   alpha_pub_->on_activate();
 
-  alpha_threshold_ = this->get_parameter("alpha_threshold").as_double();
-  expansion_radius_position_ = this->get_parameter("expansion_radius_position").as_double();
-  expansion_radius_orientation_ = this->get_parameter("expansion_radius_orientation").as_double();
-  extraction_rate_ = this->get_parameter("extraction_rate").as_double();
-  range_threshold_ = this->get_parameter("range_threshold").as_double();
-  sensor_reset_ = this->get_parameter("sensor_reset").as_bool();
-
   auto node = shared_from_this();
   dyn_params_handler_ = node->add_on_set_parameters_callback(
     std::bind(&EMcl2Node::dynamicParametersCallback, this, _1));
@@ -397,6 +390,13 @@ void EMcl2Node::initCommunication()
   odom_frame_id_ = this->get_parameter("odom_frame_id").as_string();
   base_frame_id_ = this->get_parameter("base_frame_id").as_string();
   transform_tolerance_ = this->get_parameter("transform_tolerance").as_double();
+
+  alpha_threshold_ = this->get_parameter("alpha_threshold").as_double();
+  expansion_radius_position_ = this->get_parameter("expansion_radius_position").as_double();
+  expansion_radius_orientation_ = this->get_parameter("expansion_radius_orientation").as_double();
+  extraction_rate_ = this->get_parameter("extraction_rate").as_double();
+  range_threshold_ = this->get_parameter("range_threshold").as_double();
+  sensor_reset_ = this->get_parameter("sensor_reset").as_bool();
 
   tfb_.reset(new tf2_ros::TransformBroadcaster(this));
   tf_.reset(new tf2_ros::Buffer(this->get_clock()));
