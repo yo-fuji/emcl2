@@ -624,7 +624,7 @@ bool EMcl2Node::getOdomPose(double& x, double& y, double& yaw)
 
   geometry_msgs::msg::PoseStamped odom_pose;
   try {
-    this->tf_->transform(ident, odom_pose, odom_frame_id_);
+    this->tf_->transform(ident, odom_pose, odom_frame_id_, tf2::durationFromSec(transform_tolerance_));
   } catch (const tf2::TransformException& e) {
     RCLCPP_WARN(this->get_logger(), "Failed to compute odom pose, skipping scan (%s)", e.what());
     return false;
@@ -645,7 +645,7 @@ bool EMcl2Node::getLidarPose(double& x, double& y, double& yaw, bool& inv)
 
   geometry_msgs::msg::PoseStamped lidar_pose;
   try {
-    this->tf_->transform(ident, lidar_pose, base_frame_id_);
+    this->tf_->transform(ident, lidar_pose, base_frame_id_, tf2::durationFromSec(transform_tolerance_));
   } catch (const tf2::TransformException& e) {
     RCLCPP_WARN(this->get_logger(), "Failed to compute lidar pose, skipping scan (%s)", e.what());
     return false;
