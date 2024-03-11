@@ -76,7 +76,7 @@ bool Particle::wallConflict(LikelihoodFieldMap* map, Scan& scan, double threshol
     } else
       hit_counter = 0;
 
-    if (hit_counter * scan.angle_increment_ >= threshold) {
+    if ((hit_counter > 0) && ((hit_counter * scan.angle_increment_) >= threshold)) {
       if (replace)
         sensorReset(lidar_x, lidar_y,
                     r1, a1, hit_lx1, hit_ly1,
