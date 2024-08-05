@@ -157,6 +157,12 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
     descriptor.description = "flag for sensor resettings";
     this->declare_parameter("sensor_reset", false, descriptor);
   }
+  if (!this->has_parameter("tf_fix")) {
+    rcl_interfaces::msg::ParameterDescriptor descriptor;
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_BOOL;
+    descriptor.description = "flag for tf fixing";
+    this->declare_parameter("tf_fix", false, descriptor);
+  }
 
   if (!this->has_parameter("odom_fw_dev_per_fw")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
@@ -332,6 +338,9 @@ EMcl2Node::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
       if (name == "sensor_reset") {
         sensor_reset_ = value;
         update_pf = true;
+      } else if (name == "tf_fix") {
+        tf_fix_ = value;
+        RCLCPP_INFO(this->get_logger(), "tf_fix: %s", boolString(tf_fix_).c_str());
       } else {
         RCLCPP_DEBUG(this->get_logger(), "Unknown name: %s: %s", name.c_str(), boolString(value).c_str());
       }
@@ -397,6 +406,7 @@ void EMcl2Node::initCommunication()
   extraction_rate_ = this->get_parameter("extraction_rate").as_double();
   range_threshold_ = this->get_parameter("range_threshold").as_double();
   sensor_reset_ = this->get_parameter("sensor_reset").as_bool();
+  tf_fix_ = this->get_parameter("tf_fix").as_bool();
 
   tfb_.reset(new tf2_ros::TransformBroadcaster(this));
   tf_.reset(new tf2_ros::Buffer(this->get_clock()));
@@ -585,12 +595,13 @@ void EMcl2Node::publishOdomFrame(const rclcpp::Time& stamp,
     tf2::Transform odom_to_base;
     tf2::fromMsg(transform_stamped.transform, odom_to_base);
 
-    geometry_msgs::msg::TransformStamped map_to_odom_stamped;
-    tf2::toMsg(map_to_base * odom_to_base.inverse(), map_to_odom_stamped.transform);
-    map_to_odom_stamped.header.stamp = scan_stamp_ + rclcpp::Duration::from_seconds(transform_tolerance_);
-    map_to_odom_stamped.header.frame_id = global_frame_id_;
-    map_to_odom_stamped.child_frame_id = odom_frame_id_;
-    tfb_->sendTransform(map_to_odom_stamped);
+    if (!tf_fix_) {
+      tf2::toMsg(map_to_base * odom_to_base.inverse(), map_to_odom_stamped_.transform);
+    }
+    map_to_odom_stamped_.header.stamp = scan_stamp_ + rclcpp::Duration::from_seconds(transform_tolerance_);
+    map_to_odom_stamped_.header.frame_id = global_frame_id_;
+    map_to_odom_stamped_.child_frame_id = odom_frame_id_;
+    tfb_->sendTransform(map_to_odom_stamped_);
   } catch (const tf2::TransformException& e) {
     RCLCPP_DEBUG(this->get_logger(), "Failed to subtract base to odom transform (%s)", e.what());
   }

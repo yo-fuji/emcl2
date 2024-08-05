@@ -76,6 +76,7 @@ private:
   double extraction_rate_;
   double range_threshold_;
   bool sensor_reset_;
+  bool tf_fix_;
 
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfb_;
   std::shared_ptr<tf2_ros::TransformListener> tfl_;
@@ -88,6 +89,7 @@ private:
   double init_x_, init_y_, init_t_;
   bool first_init_;
   bool map_request_;
+  geometry_msgs::msg::TransformStamped map_to_odom_stamped_;
 
   void publishPose(const rclcpp::Time& stamp,
                    double x, double y, double t,

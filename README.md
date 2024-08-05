@@ -11,6 +11,8 @@ nav2_amclを置換するため、インターフェース周りで仕様を変�
 
 - Componentに対応しました。
 
+- tf固定化フラグを追加しました。
+
 ### Subscribed Topic
 
 - map (nav_msgs/msg/OccupancyGrid)
@@ -27,6 +29,10 @@ nav2_amclを置換するため、インターフェース周りで仕様を変�
 
     送信されるtransformのタイムスタンプに加算される時間 [sec]<br>
     入力トピックの時間誤差の許容値になります。
+
+- tf_fix (bool, default: false)
+
+    tfの更新を停止します。
 
 ## 参照
 
