@@ -153,7 +153,7 @@ EMcl2Node::EMcl2Node(const rclcpp::NodeOptions& options)
   }
   if (!this->has_parameter("sensor_reset")) {
     rcl_interfaces::msg::ParameterDescriptor descriptor;
-    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_BOOL;
     descriptor.description = "flag for sensor resettings";
     this->declare_parameter("sensor_reset", false, descriptor);
   }
