@@ -16,7 +16,8 @@ ExpResetMcl2::ExpResetMcl2(const Pose& p, int num, const Scan& scan,
                            const std::shared_ptr<LikelihoodFieldMap>& map,
                            double alpha_th,
                            double expansion_radius_position, double expansion_radius_orientation,
-                           double extraction_rate, double range_threshold, bool sensor_reset)
+                           double extraction_rate, double range_threshold, bool sensor_reset,
+                           bool tf_fix)
   : Mcl::Mcl(p, num, scan, odom_model, map)
   , alpha_threshold_(alpha_th)
   , expansion_radius_position_(expansion_radius_position)
@@ -24,6 +25,7 @@ ExpResetMcl2::ExpResetMcl2(const Pose& p, int num, const Scan& scan,
   , extraction_rate_(extraction_rate)
   , range_threshold_(range_threshold)
   , sensor_reset_(sensor_reset)
+  , tf_fix_(tf_fix)
 {
 }
 
@@ -33,7 +35,8 @@ ExpResetMcl2::~ExpResetMcl2()
 
 void ExpResetMcl2::paramsUpdate(double alpha_th,
                                 double expansion_radius_position, double expansion_radius_orientation,
-                                double extraction_rate, double range_threshold, bool sensor_reset)
+                                double extraction_rate, double range_threshold, bool sensor_reset,
+                                bool tf_fix)
 {
   alpha_threshold_ = alpha_th;
   expansion_radius_position_ = expansion_radius_position;
@@ -41,6 +44,7 @@ void ExpResetMcl2::paramsUpdate(double alpha_th,
   extraction_rate_ = extraction_rate;
   range_threshold_ = range_threshold;
   sensor_reset_ = sensor_reset;
+  tf_fix_ = tf_fix;
 }
 
 void ExpResetMcl2::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv)
@@ -90,7 +94,7 @@ void ExpResetMcl2::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, 
 
   alpha_ = nonPenetrationRate(static_cast<int>(particles_.size() * extraction_rate_), map_.get(), scan);
   RCLCPP_DEBUG(logger_, "ALPHA: %f / %f", alpha_, alpha_threshold_);
-  if (alpha_ < alpha_threshold_) {
+  if ((alpha_ < alpha_threshold_) && (!tf_fix_)) {
     RCLCPP_INFO(logger_, "RESET: %f / %f", alpha_, alpha_threshold_);
     expansionReset();
     for (auto& p : particles_) {

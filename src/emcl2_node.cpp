@@ -340,7 +340,7 @@ EMcl2Node::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
         update_pf = true;
       } else if (name == "tf_fix") {
         tf_fix_ = value;
-        RCLCPP_INFO(this->get_logger(), "tf_fix: %s", boolString(tf_fix_).c_str());
+        update_pf = true;
       } else {
         RCLCPP_DEBUG(this->get_logger(), "Unknown name: %s: %s", name.c_str(), boolString(value).c_str());
       }
@@ -356,10 +356,12 @@ EMcl2Node::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
     RCLCPP_INFO(this->get_logger(), "extraction_rate: %f", extraction_rate_);
     RCLCPP_INFO(this->get_logger(), "range_threshold: %f", range_threshold_);
     RCLCPP_INFO(this->get_logger(), "sensor_reset: %s", boolString(sensor_reset_).c_str());
+    RCLCPP_INFO(this->get_logger(), "tf_fix: %s", boolString(tf_fix_).c_str());
 
     pf_->paramsUpdate(alpha_threshold_,
                       expansion_radius_position_, expansion_radius_orientation_,
-                      extraction_rate_, range_threshold_, sensor_reset_);
+                      extraction_rate_, range_threshold_, sensor_reset_,
+                      tf_fix_);
   }
 
   result.successful = true;
@@ -480,7 +482,8 @@ void EMcl2Node::mapReceived(const nav_msgs::msg::OccupancyGrid& msg)
 
   pf_.reset(new ExpResetMcl2(init_pose, num_particles, scan, om, map,
                              alpha_threshold_, expansion_radius_position_, expansion_radius_orientation_,
-                             extraction_rate_, range_threshold_, sensor_reset_));
+                             extraction_rate_, range_threshold_, sensor_reset_,
+                             tf_fix_));
 }
 
 void EMcl2Node::loop()
